@@ -1,0 +1,109 @@
+using System;
+using System.Collections.Generic;
+using System.Xml.Serialization;
+
+// Класс для представления студента
+public class Student
+{
+    public string Name { get; set; }
+    public int Age { get; set; }
+    public string Gender { get; set; }
+
+    public Student() { } // Обязательный конструктор без параметров для XmlSerializer
+}
+
+// Класс для представления группы студентов
+public class Group
+{
+    public List<Student> Students { get; set; }
+
+    public Group()
+    {
+        Students = new List<Student>();
+    }
+}
+
+class Program
+{
+    static void Main()
+    {
+        // Создаем объект группы и добавляем студентов
+        Group group = new Group();
+        group.Students.Add(new Student { Name = "Иванов Иван", Age = 20, Gender = "Мужской" });
+        group.Students.Add(new Student { Name = "Петрова Мария", Age = 21, Gender = "Женский" });
+        group.Students.Add(new Student { Name = "Сидоров Павел", Age = 19, Gender = "Мужской" });
+
+        // Сериализация объекта Group в XML-файл
+        SerializeGroupToXml(group, "students.xml");
+
+        Console.WriteLine("Данные о группе студентов записаны в файл 'students.xml'.");
+
+        // Десериализация объекта Group из XML-файла
+        Group deserializedGroup = DeserializeGroupFromXml("students.xml");
+
+        Console.WriteLine("\nДанные о группе студентов, прочитанные из файла:");
+        foreach (var student in deserializedGroup.Students)
+        {
+            Console.WriteLine($"Имя: {student.Name}, Возраст: {student.Age}, Пол: {student.Gender}");
+        }
+    }
+
+    static void SerializeGroupToXml(Group group, string fileName)
+    {
+        XmlSerializer serializer = new XmlSerializer(typeof(Group));
+
+        // Получаем путь к рабочему столу пользователя
+        string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+        // Комбинируем путь к файлу на рабочем столе
+        string filePath = desktopPath + "\\" + fileName;
+
+        // Создаем файловый поток для записи
+        System.IO.FileStream fs = null;
+        try
+        {
+            fs = new System.IO.FileStream(filePath, System.IO.FileMode.Create);
+            serializer.Serialize(fs, group);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Произошла ошибка при записи в файл: {e.Message}");
+        }
+        finally
+        {
+            // Закрываем поток
+            if (fs != null)
+                fs.Close();
+        }
+    }
+
+    static Group DeserializeGroupFromXml(string fileName)
+    {
+        XmlSerializer serializer = new XmlSerializer(typeof(Group));
+        Group group = null;
+
+        // Получаем путь к рабочему столу пользователя
+        string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+        // Комбинируем путь к файлу на рабочем столе
+        string filePath = desktopPath + "\\" + fileName;
+
+        // Создаем файловый поток для чтения
+        System.IO.FileStream fs = null;
+        try
+        {
+            fs = new System.IO.FileStream(filePath, System.IO.FileMode.Open);
+            group = (Group)serializer.Deserialize(fs);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Произошла ошибка при чтении из файла: {e.Message}");
+        }
+        finally
+        {
+            // Закрываем поток
+            if (fs != null)
+                fs.Close();
+        }
+
+        return group;
+    }
+}
